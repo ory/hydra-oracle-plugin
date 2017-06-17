@@ -1,0 +1,27 @@
+FROM cperfect/golang-ora:1.9beta1
+
+WORKDIR /go/src/github.com/ory/hydra-oracle-plugin
+RUN go get github.com/Masterminds/glide
+RUN go get gopkg.in/rana/ora.v4
+
+ADD ./glide.yaml ./glide.yaml
+ADD ./glide.lock ./glide.lock
+RUN glide install --skip-test -v
+
+ADD . .
+
+# This ensures we're pulling hydra in the right version
+RUN cp -r /go/src/github.com/ory/hydra-oracle-plugin/vendor/github.com/ory/hydra/ /go/src/github.com/ory/hydra/
+
+WORKDIR /go/src/github.com/ory/hydra
+RUN glide install -v
+
+RUN cp -r /go/src/github.com/ory/hydra-oracle-plugin /go/src/github.com/ory/hydra/oracle-plugin
+RUN rm -rf /go/src/github.com/ory/hydra/oracle-plugin/vendor
+RUN go build --buildmode=plugin -o ./plugin-ora.so ./oracle-plugin/*.go
+RUN go build --buildmode=plugin -o ./oracle-plugin/plugin-ora.so ./oracle-plugin/*.go
+
+RUN go install .
+ENTRYPOINT /go/bin/hydra host
+
+EXPOSE 4444

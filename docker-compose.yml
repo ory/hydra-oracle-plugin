@@ -1,0 +1,15 @@
+version: '3'
+
+services:
+
+  plugin:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 4040:4040
+    environment:
+      - ORACLE_DSN=${ORACLE_DSN}
+    volumes:
+      - ./:/go/src/github.com/ory/hydra-oracle-plugin/dev
+      - ./build:/go/src/github.com/ory/hydra-oracle-plugin/build
